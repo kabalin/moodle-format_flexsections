@@ -29,7 +29,7 @@ import Section from 'core_courseformat/local/content/section';
 import CmItem from 'core_courseformat/local/content/section/cmitem';
 // Course actions is needed for actions that are not migrated to components.
 import courseActions from 'core_course/actions';
-import DispatchActions from 'core_courseformat/local/content/actions';
+import DispatchActions from 'format_flexsections/local/content/actions';
 import * as CourseEvents from 'core_course/events';
 
 export default class Component extends BaseComponent {
