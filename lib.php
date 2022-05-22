@@ -365,6 +365,44 @@ class format_flexsections extends \core_courseformat\base {
     }
 
     /**
+     * Callback used in WS core_course_edit_section when teacher performs an AJAX action on a section (show/hide).
+     *
+     * Access to the course is already validated in the WS but the callback has to make sure
+     * that particular action is allowed by checking capabilities
+     *
+     * Course formats should register.
+     *
+     * @param section_info|stdClass $section
+     * @param string $action
+     * @param int $sr
+     * @return null|array any data for the Javascript post-processor (must be json-encodeable)
+     */
+    public function section_action($section, $action, $sr) {
+        global $PAGE;
+
+        if ($section->section && ($action === 'setmarker' || $action === 'removemarker')) {
+            // Format 'topics' allows to set and remove markers in addition to common section actions.
+            require_capability('moodle/course:setcurrentsection', context_course::instance($this->courseid));
+            course_set_marker($this->courseid, ($action === 'setmarker') ? $section->section : 0);
+            return null;
+        }
+
+        // For show/hide actions call the parent method and return the new content for .section_availability element.
+        $rv = parent::section_action($section, $action, $sr);
+        $renderer = $PAGE->get_renderer('format_flexsections');
+
+        if (!($section instanceof section_info)) {
+            $modinfo = course_modinfo::instance($this->courseid);
+            $section = $modinfo->get_section_info($section->section);
+        }
+        $elementclass = $this->get_output_classname('content\\section\\availability');
+        $availability = new $elementclass($this, $section);
+
+        $rv['section_availability'] = $renderer->render($availability);
+        return $rv;
+    }
+
+    /**
      * Definitions of the additional options that this course format uses for section
      *
      * See {@link format_base::course_format_options()} for return array definition.
@@ -643,23 +681,6 @@ class format_flexsections extends \core_courseformat\base {
                 }
             }
 
-            // Set course marker if required.
-            $marker = optional_param('marker', null, PARAM_INT);
-            if ($marker !== null && has_capability('moodle/course:setcurrentsection', $context) && confirm_sesskey()) {
-                if ($marker > 0) {
-                    // Set marker.
-                    $url = course_get_url($this->courseid, $marker, array('sr' => $this->get_viewed_section()));
-                    course_set_marker($this->courseid, $marker);
-                    redirect($url);
-                } else if ($this->get_course()->marker) {
-                    // Remove marker.
-                    $url = course_get_url($this->courseid, $this->get_course()->marker,
-                            array('sr' => $this->get_viewed_section()));
-                    course_set_marker($this->courseid, 0);
-                    redirect($url);
-                }
-            }
-
             // Change visibility if required.
             $hide = optional_param('hide', null, PARAM_INT);
             if ($hide !== null && has_capability('moodle/course:sectionvisibility', $context) && confirm_sesskey()) {
@@ -782,22 +803,6 @@ class format_flexsections extends \core_courseformat\base {
                 $class = 'collapsed';
             }
             $controls[] = new format_flexsections_edit_control($class, $switchcollapsedurl, $text);
-        }
-
-        // Set marker.
-        if ($sectionnum && has_capability('moodle/course:setcurrentsection', $context)) {
-            $setmarkerurl = course_get_url($course, $sr);
-            if ($course->marker == $section->section) {
-                $marker = 0;
-                $text = new lang_string('removemarker', 'format_flexsections');
-                $class = 'marked';
-            } else {
-                $marker = $section->section;
-                $text = new lang_string('setmarker', 'format_flexsections');
-                $class = 'marker';
-            }
-            $setmarkerurl->params(array('marker' => $marker, 'sesskey' => sesskey()));
-            $controls[] = new format_flexsections_edit_control($class, $setmarkerurl, $text);
         }
 
         // Edit section control.

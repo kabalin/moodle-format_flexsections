@@ -58,7 +58,35 @@ class controlmenu extends controlmenu_base {
         $url->param('sesskey', sesskey());
 
         $controls = [];
-
+        if ($section->section && has_capability('moodle/course:setcurrentsection', $coursecontext)) {
+            if ($course->marker == $section->section) {  // Show the "light globe" on/off.
+                $url->param('marker', 0);
+                $highlightoff = get_string('removemarker', 'format_flexsections');
+                $controls['highlight'] = [
+                    'url' => $url,
+                    'icon' => 'i/marked',
+                    'name' => $highlightoff,
+                    'pixattr' => ['class' => ''],
+                    'attr' => [
+                        'class' => 'editing_highlight',
+                        'data-action' => 'removemarker'
+                    ],
+                ];
+            } else {
+                $url->param('marker', $section->section);
+                $highlight = get_string('setmarker', 'format_flexsections');
+                $controls['highlight'] = [
+                    'url' => $url,
+                    'icon' => 'i/marker',
+                    'name' => $highlight,
+                    'pixattr' => ['class' => ''],
+                    'attr' => [
+                        'class' => 'editing_highlight',
+                        'data-action' => 'setmarker'
+                    ],
+                ];
+            }
+        }
         // Add subsection.
         if ($section->section && has_capability('moodle/course:update', $coursecontext)) {
             $controls['addchildsection'] = [
