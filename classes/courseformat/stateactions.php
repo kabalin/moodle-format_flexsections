@@ -67,16 +67,15 @@ class stateactions extends \core_courseformat\stateactions {
 
         if ($targetsectionid) {
             // Subsection.
+            require_capability('moodle/course:movesections', $coursecontext);
             $this->validate_sections($course, [$targetsectionid], __FUNCTION__);
             $targetsection = $modinfo->get_section_info_by_id($targetsectionid, MUST_EXIST);
-            require_capability('moodle/course:movesections', $coursecontext);
             $sectionid = $format->create_new_section($targetsection);
-            $this->section_state($updates, $course, [$targetsectionid, $sectionid]);
         } else {
             // Last section.
             course_create_section($course, 0);
-            $this->course_state($updates, $course);
         }
+        $this->course_state($updates, $course);
     }
 
     /**
