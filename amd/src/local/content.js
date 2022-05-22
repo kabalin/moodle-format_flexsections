@@ -85,11 +85,27 @@ export default class Component extends BaseComponent {
      * @return {Component}
      */
     static init(target, selectors, sectionReturn) {
-        const editor = getCurrentCourseEditor();
-        editor.setMutations(new Mutations());
+        const courseEditor = getCurrentCourseEditor();
+
+        // Hack to preserve legacy mutations (added in core_course/actions) after we set own plugin mutations.
+        let legacyMutations = {};
+        if (courseEditor.mutations['legacyActivityAction']) {
+            legacyMutations.legacyActivityAction = courseEditor.mutations['legacyActivityAction'];
+        }
+        if (courseEditor.mutations['legacySectionAction']) {
+            legacyMutations.legacySectionAction = courseEditor.mutations['legacySectionAction'];
+        }
+
+        // Set plugin mutations.
+        courseEditor.setMutations(new Mutations());
+
+        // Restore legacy mutations.
+        if (Object.keys(legacyMutations).length) {
+            courseEditor.addMutations(legacyMutations);
+        }
         return new Component({
             element: document.getElementById(target),
-            reactive: editor,
+            reactive: courseEditor,
             selectors,
             sectionReturn,
         });
