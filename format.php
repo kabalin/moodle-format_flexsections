@@ -27,6 +27,9 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir.'/filelib.php');
 require_once($CFG->libdir.'/completionlib.php');
 
+// Retrieve course format option fields and add them to the $course object.
+$format = course_get_format($course);
+$course = $format->get_course();
 $context = context_course::instance($course->id);
 
 if (($marker >= 0) && has_capability('moodle/course:setcurrentsection', $context) && confirm_sesskey()) {
@@ -40,9 +43,14 @@ course_create_sections_if_missing($course, 0);
 $renderer = $PAGE->get_renderer('format_flexsections');
 if (($deletesection = optional_param('deletesection', 0, PARAM_INT)) && confirm_sesskey()) {
     $renderer->confirm_delete_section($course, $displaysection, $deletesection);
-} else {
-    $renderer->display_section($course, $displaysection, $displaysection);
 }
+
+if (!empty($displaysection)) {
+    $format->set_section_number($displaysection);
+}
+$outputclass = $format->get_output_classname('content');
+$widget = new $outputclass($format);
+echo $renderer->render($widget);
 
 // Include course format js module.
 $PAGE->requires->js('/course/format/flexsections/format.js');
