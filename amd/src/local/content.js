@@ -30,6 +30,7 @@ import CmItem from 'core_courseformat/local/content/section/cmitem';
 // Course actions is needed for actions that are not migrated to components.
 import courseActions from 'core_course/actions';
 import DispatchActions from 'format_flexsections/local/content/actions';
+import Mutations from 'format_flexsections/local/courseeditor/mutations';
 import * as CourseEvents from 'core_course/events';
 
 export default class Component extends BaseComponent {
@@ -84,9 +85,11 @@ export default class Component extends BaseComponent {
      * @return {Component}
      */
     static init(target, selectors, sectionReturn) {
+        const editor = getCurrentCourseEditor();
+        editor.setMutations(new Mutations());
         return new Component({
             element: document.getElementById(target),
-            reactive: getCurrentCourseEditor(),
+            reactive: editor,
             selectors,
             sectionReturn,
         });

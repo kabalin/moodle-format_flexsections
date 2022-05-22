@@ -70,7 +70,7 @@ class stateactions extends \core_courseformat\stateactions {
             require_capability('moodle/course:movesections', $coursecontext);
             $this->validate_sections($course, [$targetsectionid], __FUNCTION__);
             $targetsection = $modinfo->get_section_info_by_id($targetsectionid, MUST_EXIST);
-            $sectionid = $format->create_new_section($targetsection);
+            $format->create_new_section($targetsection);
         } else {
             // Last section.
             course_create_section($course, 0);
@@ -111,7 +111,6 @@ class stateactions extends \core_courseformat\stateactions {
         $section = $modinfo->get_section_info_by_id($sectionid, MUST_EXIST);
         [$sectionstodelete, $modulestodelete] = $format->delete_section_int($section);
 
-
         foreach ($modulestodelete as $cmid) {
             $updates->add_cm_delete($cmid);
         }
@@ -121,6 +120,45 @@ class stateactions extends \core_courseformat\stateactions {
         }
 
         // Removing a section affects the full course structure.
+        $this->course_state($updates, $course);
+    }
+
+    /**
+     * Merge course section.
+     *
+     * @param stateupdates $updates the affected course elements track
+     * @param stdClass $course the course object
+     * @param int[] $ids not used
+     * @param int $targetsectionid optional target section id
+     * @param int $targetcmid not used
+     */
+    public function section_mergeup(
+        stateupdates $updates,
+        stdClass $course,
+        array $ids = [],
+        ?int $targetsectionid = null,
+        ?int $targetcmid = null
+    ): void {
+        if (!$targetsectionid) {
+            throw new moodle_exception("Action section_mergeup requires targetsectionid");
+        }
+
+        $coursecontext = context_course::instance($course->id);
+        require_capability('moodle/course:update', $coursecontext);
+
+        $modinfo = get_fast_modinfo($course);
+        $format = course_get_format($course->id);
+
+        $this->validate_sections($course, [$targetsectionid], __FUNCTION__);
+        $targetsection = $modinfo->get_section_info_by_id($targetsectionid, MUST_EXIST);
+        if (!$targetsection->parent) {
+            throw new moodle_exception("Action section_mergeup can't merge top level parentless sections");
+        }
+
+        $format->mergeup_section($targetsection);
+        $updates->add_section_delete($targetsectionid);
+
+        // Merging a section affects the full course structure.
         $this->course_state($updates, $course);
     }
 }

@@ -39,7 +39,7 @@ class section extends section_base {
         $sectionnum = $thissection->section;
 
         $data = parent::export_for_template($output);
-        $data->countsubsections = ($sectionnum !== 0) ? count($this->format->get_subsections($sectionnum)) : 0;
+        $data->countsubsections = ($sectionnum !== 0) ? $this->format->count_subsections_all($sectionnum) : 0;
         return $data;
     }
 }

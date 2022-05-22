@@ -51,14 +51,15 @@ class controlmenu extends controlmenu_base {
         $coursecontext = context_course::instance($course->id);
 
         if ($sectionreturn) {
-            $url = course_get_url($course, $section->section);
+            $baseurl = course_get_url($course, $section->section);
         } else {
-            $url = course_get_url($course);
+            $baseurl = course_get_url($course);
         }
-        $url->param('sesskey', sesskey());
+        $baseurl->param('sesskey', sesskey());
 
         $controls = [];
         if ($section->section && has_capability('moodle/course:setcurrentsection', $coursecontext)) {
+            $url = clone($baseurl);
             if ($course->marker == $section->section) {  // Show the "light globe" on/off.
                 $url->param('marker', 0);
                 $highlightoff = get_string('removemarker', 'format_flexsections');
@@ -89,13 +90,33 @@ class controlmenu extends controlmenu_base {
         }
         // Add subsection.
         if ($section->section && has_capability('moodle/course:update', $coursecontext)) {
+            $url = clone($baseurl);
+            $url->param('addchildsection', $section->id);
             $controls['addchildsection'] = [
                 'url' => $url,
                 'icon' => 't/add',
                 'name' => get_string('addsubsection', 'format_flexsections'),
                 'pixattr' => ['class' => ''],
                 'attr' => [
+                    'class' => 'editing_addchildsection',
                     'data-action' => 'addSection',
+                    'data-id' => $section->id
+                ],
+            ];
+        }
+
+        // Merge up.
+        if ($section->parent && has_capability('moodle/course:update', $coursecontext)) {
+            $url = clone($baseurl);
+            $url->param('mergeup', $section->id);
+            $controls['mergeup'] = [
+                'url' => $url,
+                'icon' => 'i/up',
+                'name' => get_string('mergeup', 'format_flexsections'),
+                'pixattr' => ['class' => ''],
+                'attr' => [
+                    'class' => 'editing_mergeup',
+                    'data-action' => 'mergeUpSection',
                     'data-id' => $section->id
                 ],
             ];

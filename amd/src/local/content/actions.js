@@ -33,6 +33,51 @@ import {get_string as getString} from 'core/str';
 export default class extends Actions {
 
     /**
+     * Handle a merge up section request.
+     *
+     * @param {Element} target the dispatch action element
+     * @param {Event} event the triggered event
+     */
+    async _requestMergeUpSection(target, event) {
+        // Check we have an id.
+        const sectionId = target.dataset.id;
+
+        if (!sectionId) {
+            return;
+        }
+        const sectionInfo = this.reactive.get('section', sectionId);
+
+        event.preventDefault();
+
+        const cmList = sectionInfo.cmlist ?? [];
+        if (cmList.length || sectionInfo.hassummary || sectionInfo.rawtitle || sectionInfo.countsubsections) {
+
+            const modalParams = {
+                title: getString('confirm', 'core'),
+                body: getString('confirmmerge', 'format_flexsections'),
+                saveButtonText: getString('mergeup', 'format_flexsections'),
+                type: ModalFactory.types.SAVE_CANCEL,
+            };
+
+            const modal = await this._modalBodyRenderedPromise(modalParams);
+
+            modal.getRoot().on(
+                ModalEvents.save,
+                e => {
+                    // Stop the default save button behaviour which is to close the modal.
+                    e.preventDefault();
+                    modal.destroy();
+                    this.reactive.dispatch('sectionMergeUp', target.dataset.id);
+                }
+            );
+            return;
+        } else {
+            // We don't need confirmation to merge empty sections.
+            this.reactive.dispatch('sectionMergeUp', target.dataset.id);
+        }
+    }
+
+    /**
      * Handle a delete section request.
      *
      * @param {Element} target the dispatch action element
@@ -54,7 +99,7 @@ export default class extends Actions {
             // We need confirmation if the section has something.
             const modalParams = {
                 title: getString('confirm', 'core'),
-                body: getString('confirmdelete', 'format_flexsections', sectionInfo.title),
+                body: getString('confirmdelete', 'format_flexsections'),
                 saveButtonText: getString('delete', 'core'),
                 type: ModalFactory.types.SAVE_CANCEL,
             };

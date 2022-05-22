@@ -467,7 +467,7 @@ class format_flexsections extends \core_courseformat\base {
      * @param null|int|section_info $before
      * @return int section id
      */
-    public function create_new_section($parent = 0, $before = null) {
+    public function create_new_section($parent = 0, $before = null): int {
         $section = course_create_section($this->courseid, 0);
         $this->move_section($section, $parent, $before);
         return $section->id;
@@ -481,7 +481,7 @@ class format_flexsections extends \core_courseformat\base {
      *
      * @param section_info $section
      */
-    protected function mergeup_section($section) {
+    public function mergeup_section(section_info $section): void {
         global $DB;
         if (!$section->section) {
             // Section 0 does not have parent.
@@ -500,7 +500,7 @@ class format_flexsections extends \core_courseformat\base {
         }
         foreach ($subsections as $subsection) {
             $this->update_section_format_options(
-                    array('id' => $subsection->id, 'parent' => $parent->section));
+                ['id' => $subsection->id, 'parent' => $parent->section]);
         }
 
         if ($this->get_course()->marker == $section->section) {
@@ -509,14 +509,23 @@ class format_flexsections extends \core_courseformat\base {
 
         // Move the section to be removed to the end (this will re-number other sections).
         $this->move_section($section->section, 0);
-        // Delete it completely.
-        $params = array('courseid' => $this->courseid,
-                    'sectionid' => $section->id);
+
+        // Invalidate the section cache by given section id.
+        course_modinfo::purge_course_section_cache_by_id($this->courseid, $section->id);
+
+        // Delete section summary files.
+        $context = \context_course::instance($this->courseid);
+        $fs = get_file_storage();
+        $fs->delete_area_files($context->id, 'course', 'section', $section->id);
+
+        // Delete section completely.
         $transaction = $DB->start_delegated_transaction();
-        $DB->delete_records('course_format_options', $params);
-        $DB->delete_records('course_sections', array('id' => $section->id));
+        $DB->delete_records('course_format_options', ['courseid' => $this->courseid, 'sectionid' => $section->id]);
+        $DB->delete_records('course_sections', ['id' => $section->id]);
         $transaction->allow_commit();
-        rebuild_course_cache($this->courseid, true);
+
+        // Partial rebuild section cache that has been purged.
+        rebuild_course_cache($this->courseid, true, true);
     }
 
     /**
@@ -1033,6 +1042,24 @@ class format_flexsections extends \core_courseformat\base {
             }
         }
         return $subsections;
+    }
+
+    /**
+     * Counts total number items in subsections tree.
+     *
+     * @param int|section_info $section
+     * @return int
+     */
+    public function count_subsections_all($section): int {
+        $sectionnum = $this->get_section_relnumber($section);
+        $subsectioncount = 0;
+        foreach ($this->get_sections() as $num => $subsection) {
+            if ($subsection->parent == $sectionnum && $num != $sectionnum) {
+                // Count current subsection plus all its subsections.
+                $subsectioncount += self::count_subsections_all($subsection) + 1;
+            }
+        }
+        return $subsectioncount;
     }
 
     /**
