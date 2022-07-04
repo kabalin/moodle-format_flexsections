@@ -34,6 +34,13 @@ $string['displaycontent'] = 'Display content';
 $string['editsection'] = 'Edit section';
 $string['editsectionname'] = 'Edit section name';
 $string['hidefromothers'] = 'Hide section';
+$string['layout'] = 'Layout';
+$string['layout_help'] = 'Choose flexsections layout:
+
+* Topics - this emulates topics format, each subsection will be numbered consecutively.
+* Weekly - this emulates weekly format in a way where top level sections will be named after weeks. This does not apply to subsections.';
+$string['layouttopics'] = 'Topics layout';
+$string['layoutweekly'] = 'Weekly layout';
 $string['maxsubsections'] = 'Max subsection levels';
 $string['maxsubsections_help'] = 'Setting maximum number of subsection levels will restrict ability of user to create sections at levels deeper than configured.';
 $string['maxsubsectionsdesc'] = 'The default maximum number of subsection levels. This can be configured per course in course settings.';
@@ -55,6 +62,7 @@ $string['sectionname'] = 'Topic';
 $string['showcollapsed'] = 'Display as a link';
 $string['showexpanded'] = 'Display on the same page';
 $string['showfromothers'] = 'Show section';
+$string['subtopic'] = 'Subtopic';
 
 // Deprecated but still can be used in 4.0, to be removed when we have a branch for Moodle 4.1 or later.
 $string['addsection'] = 'Add section';

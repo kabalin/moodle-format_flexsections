@@ -29,6 +29,8 @@ use core\output\inplace_editable;
 
 define('FORMAT_FLEXSECTIONS_COLLAPSED', 1);
 define('FORMAT_FLEXSECTIONS_EXPANDED', 0);
+define('FORMAT_FLEXSECTIONS_LAYOUT_TOPICS', 0);
+define('FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY', 1);
 
 /**
  * Main class for the Flexible sections course format.
@@ -85,6 +87,156 @@ class format_flexsections extends core_courseformat\base {
     }
 
     /**
+     * Returns the default section name for the weekly course format.
+     *
+     * If the section number is 0, it will use the string with key = section0name from the course format's lang file.
+     * Otherwise, the default format of "[start date] - [end date]" will be returned.
+     *
+     * @param stdClass $section Section object from database or just field course_sections section
+     * @return string The default value for the section name.
+     */
+    public function get_default_section_name($section) {
+        $course = $this->get_course();
+
+        if ($section->section == 0) {
+            // Return the general section.
+            return get_string('section0name', 'format_flexsections');
+        } else if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY) {
+            // Show weeks layout for top level section.
+            if (isset($section->parent) && $section->parent === 0) {
+                // This is identical what weekly format does.
+                $dates = $this->get_section_dates($section);
+
+                // We subtract 24 hours for display purposes.
+                $dates->end = ($dates->end - DAYSECS);
+
+                $dateformat = get_string('strftimedateshort');
+                $weekday = userdate($dates->start, $dateformat);
+                $endweekday = userdate($dates->end, $dateformat);
+                return $weekday.' - '.$endweekday;
+            } else {
+                return get_string('subtopic', 'format_flexsections');
+            }
+        } else {
+            // Use course_format::get_default_section_name implementation which
+            // will display the section name in "Topic n" format.
+            return parent::get_default_section_name($section);
+        }
+    }
+
+    /**
+     * Returns the default end date for weeks course format.
+     *
+     * @param moodleform $mform
+     * @param array $fieldnames The form - field names mapping.
+     * @return int
+     */
+    public function get_default_course_enddate($mform, $fieldnames = array()) {
+        $course = $this->get_course();
+        if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY) {
+            if (empty($fieldnames['startdate'])) {
+                $fieldnames['startdate'] = 'startdate';
+            }
+
+            if (empty($fieldnames['numsections'])) {
+                $fieldnames['numsections'] = 'numsections';
+            }
+
+            $startdate = $this->get_form_start_date($mform, $fieldnames);
+            if ($mform->elementExists($fieldnames['numsections'])) {
+                $numsections = $mform->getElementValue($fieldnames['numsections']);
+                $numsections = $mform->getElement($fieldnames['numsections'])->exportValue($numsections);
+            } else if ($this->get_courseid()) {
+                // For existing courses get the number of sections.
+                $numsections = $this->get_last_section_number();
+            } else {
+                // Fallback to the default value for new courses.
+                $numsections = get_config('moodlecourse', $fieldnames['numsections']);
+            }
+
+            // Final week's last day.
+            $dates = $this->get_section_dates(intval($numsections), $startdate);
+            return $dates->end;
+        }
+        return parent::get_default_course_enddate($mform, $fieldnames);
+    }
+
+    /**
+     * Return the start and end date of the passed top level section.
+     *
+     * @param int|stdClass|section_info $section section to get the dates for
+     * @param int $startdate Force course start date, useful when the course is not yet created
+     * @return stdClass property start for startdate, property end for enddate
+     */
+    public function get_section_dates($section, $startdate = false) {
+        global $USER;
+        static $topsections = [];
+
+        if (empty($topsections)) {
+            // Populate top section numbers and keep it in static variable.
+            foreach ($this->get_sections() as $s) {
+                if ($s->parent === 0) {
+                    array_push($topsections, $s->section);
+                }
+            }
+        }
+
+        if ($section->parent !== 0) {
+            throw new coding_exception('get_section_dates method is designed to be used with top level sections only.');
+        }
+
+        if ($startdate === false) {
+            $course = $this->get_course();
+            $userdates = course_get_course_dates_for_user_id($course, $USER->id);
+            $startdate = $userdates['start'];
+        }
+
+        if (is_object($section)) {
+            $sectionnum = $section->section;
+        } else {
+            $sectionnum = $section;
+        }
+
+        // Determine offset based on top section consecutive number.
+        $offset = array_search($sectionnum, $topsections);
+
+        // Hack alert. We add 2 hours to avoid possible DST problems. (e.g. we go into daylight
+        // savings and the date changes.
+        $startdate = $startdate + HOURSECS * 2;
+
+        $dates = new stdClass();
+        $dates->start = $startdate + (WEEKSECS * ($offset - 1));
+        $dates->end = $dates->start + WEEKSECS;
+
+        return $dates;
+    }
+
+    /**
+     * Returns true if the specified week is current
+     *
+     * @param int|stdClass|section_info $section
+     * @return bool
+     */
+    public function is_section_current($section) {
+        $course = $this->get_course();
+        if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY) {
+            if (is_object($section)) {
+                $sectionnum = $section->section;
+            } else {
+                $sectionnum = $section;
+            }
+
+            if ($sectionnum < 1 || $section->parent !== 0) {
+                return false;
+            }
+            $timenow = time();
+            $dates = $this->get_section_dates($section);
+            return (($timenow >= $dates->start) && ($timenow < $dates->end));
+        }
+        return parent::is_section_current($section);
+    }
+
+    /**
      * Returns the depth of the section in hierarchy
      *
      * For example, top section has depth 0, subsection of top section has depth 1,
@@ -110,27 +262,6 @@ class format_flexsections extends core_courseformat\base {
             $depth++;
         }
         return $depth;
-    }
-
-    /**
-     * Returns the default section name for the flexsections course format.
-     *
-     * If the section number is 0, it will use the string with key = section0name from the course format's lang file.
-     * If the section number is not 0, the base implementation of course_format::get_default_section_name which uses
-     * the string with the key = 'sectionname' from the course format's lang file + the section number will be used.
-     *
-     * @param stdClass|section_info $section Section object from database or just field course_sections section
-     * @return string The default value for the section name.
-     */
-    public function get_default_section_name($section) {
-        if ($section->section == 0) {
-            // Return the general section.
-            return get_string('section0name', 'format_flexsections');
-        } else {
-            // Use course_format::get_default_section_name implementation which
-            // will display the section name in "Topic n" format.
-            return parent::get_default_section_name($section);
-        }
     }
 
     /**
@@ -435,6 +566,10 @@ class format_flexsections extends core_courseformat\base {
                     'default' => (int) get_config('format_flexsections', 'maxsubsections'),
                     'type' => PARAM_INT,
                 ],
+                'layout' => [
+                    'default' => FORMAT_FLEXSECTIONS_LAYOUT_TOPICS,
+                    'type' => PARAM_INT,
+                ],
             ];
         }
         if ($foreditform && !isset($courseformatoptions['maxsubsections']['label'])) {
@@ -447,6 +582,18 @@ class format_flexsections extends core_courseformat\base {
                     'element_attributes' => [
                         'size = "7"',
                     ],
+                ],
+                'layout' => [
+                    'label' => new lang_string('layout', 'format_flexsections'),
+                    'help' => 'layout',
+                    'help_component' => 'format_flexsections',
+                    'element_type' => 'select',
+                    'element_attributes' => array(
+                        array(
+                            FORMAT_FLEXSECTIONS_LAYOUT_TOPICS => new lang_string('layouttopics', 'format_flexsections'),
+                            FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY => new lang_string('layoutweekly', 'format_flexsections')
+                        )
+                    ),
                 ],
             ];
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
