@@ -28,6 +28,8 @@ $string['addsection'] = 'Add section';
 $string['addsections'] = 'Add section';
 $string['addsubsection'] = 'Add subsection';
 $string['addsectionbelow'] = 'Add section below';
+$string['automaticenddate'] = 'For weekly layout calculate the end date from the number of sections';
+$string['automaticenddate_help'] = 'If enabled, the end date for the course will be automatically calculated from the number of sections and the course start date.';
 $string['backtocourse'] = 'Back to course \'{$a}\'';
 $string['backtosection'] = 'Back to \'{$a}\'';
 $string['cmbacklink'] = 'Display back link in activities';
@@ -48,6 +50,13 @@ $string['errorsectiondepthexceeded'] = 'Subsection depth has exceeded configured
 $string['hidefromothers'] = 'Hide section';
 $string['maxsectiondepth'] = 'Max subsection depth';
 $string['maxsectiondepthdesc'] = 'Maximum number of subsection levels.';
+$string['layout'] = 'Layout';
+$string['layout_help'] = 'Choose flexsections layout:
+
+* Topics - this emulates topics format, each subsection will be numbered consecutively.
+* Weekly - this emulates weekly format in a way where top level sections will be named after weeks. This does not apply to subsections.';
+$string['layouttopics'] = 'Topics layout';
+$string['layoutweekly'] = 'Weekly layout';
 $string['mergeup'] = 'Merge with parent';
 $string['moveassubsection'] = 'As a subsection of \'{$a}\'';
 $string['movebeforecm'] = 'Before activity \'{$a}\'';
@@ -73,6 +82,7 @@ $string['showsection0title'] = 'Show top section title';
 $string['showsection0title_help'] = 'When enabled, the general section will have a title and will be collapsible, same as it behaves in the Topics format.';
 $string['showsection0titledefault'] = 'Show top section title by default';
 $string['showsection0titledefaultdesc'] = 'This defines default setting that will be used for new and existing courses, it can be changed for individual courses in their settings.';
+$string['subtopic'] = 'Subtopic';
 
 // Deprecated since 4.1.
 $string['addsubsectionfor'] = 'Add subsection for \'{$a}\'';
