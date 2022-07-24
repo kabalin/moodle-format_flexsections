@@ -64,8 +64,6 @@ All notable changes to this project will be documented in this file.
 - Fixed a bug when drag&drop of activities was not possible if the target
   section is empty
 
-Release contributor: **Hogeschool Inholland, the Netherlands**.
-
 ## [4.0.3] - 2023-05-06
 ### Added
 - Allow to indent activities on the course page

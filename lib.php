@@ -404,6 +404,15 @@ class format_flexsections extends core_courseformat\base {
      */
     public function section_format_options($foreditform = false): array {
         return [
+            'secondarytitle' => [
+                'type' => PARAM_TEXT,
+                'label' => get_string('secondarytitle', 'format_flexsections'),
+                'element_type' => 'text',
+                'help' => 'secondarytitle',
+                'default' => '',
+                'cache' => true,
+                'cachedefault' => '',
+            ],
             'parent' => [
                 'type' => PARAM_INT,
                 'label' => '',
