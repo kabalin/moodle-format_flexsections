@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
   layout.
 - Add an option to format settings that allows emulating weekly format in a way
   where top level sections will be named after weeks. This does not apply to subsections.
+- Add option to section settings that allows defining secondary title.
 
 ## [4.0.1] - 2022-06-19
 ### Added
