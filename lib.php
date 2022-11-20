@@ -579,6 +579,10 @@ class format_flexsections extends core_courseformat\base {
                     'default' => FORMAT_FLEXSECTIONS_LAYOUT_TOPICS,
                     'type' => PARAM_INT,
                 ],
+                'showsection0title' => [
+                    'default' => 0,
+                    'type' => PARAM_BOOL,
+                ],
             ];
         }
         if ($foreditform && !isset($courseformatoptions['maxsubsections']['label'])) {
@@ -603,6 +607,12 @@ class format_flexsections extends core_courseformat\base {
                             FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY => new lang_string('layoutweekly', 'format_flexsections')
                         )
                     ),
+                ],
+                'showsection0title' => [
+                    'label' => new lang_string('showsection0title', 'format_flexsections'),
+                    'help' => 'showsection0title',
+                    'help_component' => 'format_flexsections',
+                    'element_type' => 'advcheckbox',
                 ],
             ];
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
@@ -831,7 +841,7 @@ class format_flexsections extends core_courseformat\base {
      *
      * @return int
      */
-    public function get_viewed_section() {
+    public function get_viewed_section(): int {
         if ($this->on_course_view_page()) {
             if ($s = $this->get_caller_page_url()->get_param('section')) {
                 return $s;
