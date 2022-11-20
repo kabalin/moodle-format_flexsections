@@ -67,6 +67,8 @@ $string['showfromothers'] = 'Show section';
 $string['showsection0title'] = 'Show top section title';
 $string['showsection0title_help'] = 'When enabled, section 0 will have title and will be collapsable, same at it behaves at the Topics format.';
 $string['subtopic'] = 'Subtopic';
+$string['showsection0titledefault'] = 'Show top section title by default';
+$string['showsection0titledefaultdesc'] = 'This defines default setting that will be used for new and existing courses, it can be changed for particular course at its settings.';
 
 // Deprecated but still can be used in 4.0, to be removed when we have a branch for Moodle 4.1 or later.
 $string['addsection'] = 'Add section';

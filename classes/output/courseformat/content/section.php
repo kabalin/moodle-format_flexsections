@@ -72,7 +72,6 @@ class section extends \core_courseformat\output\local\content\section {
             $data->level = $this->level;
         }
 
-
         if ((!$course->showsection0title && $this->section->section === 0) ||
                 ($this->section->section !== 0 && $this->section->section === $this->format->get_viewed_section())) {
             // Never collapse content of top section in single section view or

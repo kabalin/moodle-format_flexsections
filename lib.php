@@ -580,7 +580,7 @@ class format_flexsections extends core_courseformat\base {
                     'type' => PARAM_INT,
                 ],
                 'showsection0title' => [
-                    'default' => 0,
+                    'default' => get_config('format_flexsections', 'showsection0titledefault') ?? 0,
                     'type' => PARAM_BOOL,
                 ],
             ];
