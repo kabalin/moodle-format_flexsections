@@ -24,6 +24,8 @@
 
 $string['addsections'] = 'Add section';
 $string['addsubsection'] = 'Add subsection';
+$string['automaticenddate'] = 'For weekly layout calculate the end date from the number of sections';
+$string['automaticenddate_help'] = 'If enabled, the end date for the course will be automatically calculated from the number of sections and the course start date.';
 $string['backtocourse'] = 'Back to course \'{$a}\'';
 $string['backtosection'] = 'Back to \'{$a}\'';
 $string['confirmdelete'] = 'Are you sure you want to delete this section? All activities and subsections will also be deleted';

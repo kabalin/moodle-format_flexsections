@@ -127,43 +127,6 @@ class format_flexsections extends core_courseformat\base {
     }
 
     /**
-     * Returns the default end date for weeks course format.
-     *
-     * @param moodleform $mform
-     * @param array $fieldnames The form - field names mapping.
-     * @return int
-     */
-    public function get_default_course_enddate($mform, $fieldnames = array()) {
-        $course = $this->get_course();
-        if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY) {
-            if (empty($fieldnames['startdate'])) {
-                $fieldnames['startdate'] = 'startdate';
-            }
-
-            if (empty($fieldnames['numsections'])) {
-                $fieldnames['numsections'] = 'numsections';
-            }
-
-            $startdate = $this->get_form_start_date($mform, $fieldnames);
-            if ($mform->elementExists($fieldnames['numsections'])) {
-                $numsections = $mform->getElementValue($fieldnames['numsections']);
-                $numsections = $mform->getElement($fieldnames['numsections'])->exportValue($numsections);
-            } else if ($this->get_courseid()) {
-                // For existing courses get the number of sections.
-                $numsections = $this->get_last_section_number();
-            } else {
-                // Fallback to the default value for new courses.
-                $numsections = get_config('moodlecourse', $fieldnames['numsections']);
-            }
-
-            // Final week's last day.
-            $dates = $this->get_section_dates(intval($numsections), $startdate);
-            return $dates->end;
-        }
-        return parent::get_default_course_enddate($mform, $fieldnames);
-    }
-
-    /**
      * Return the start and end date of the passed top level section.
      *
      * @param int|stdClass|section_info $section section to get the dates for
@@ -183,16 +146,6 @@ class format_flexsections extends core_courseformat\base {
             }
         }
 
-        if ($section->parent !== 0) {
-            throw new coding_exception('get_section_dates method is designed to be used with top level sections only.');
-        }
-
-        if ($startdate === false) {
-            $course = $this->get_course();
-            $userdates = course_get_course_dates_for_user_id($course, $USER->id);
-            $startdate = $userdates['start'];
-        }
-
         if (is_object($section)) {
             $sectionnum = $section->section;
         } else {
@@ -201,6 +154,17 @@ class format_flexsections extends core_courseformat\base {
 
         // Determine offset based on top section consecutive number.
         $offset = array_search($sectionnum, $topsections);
+
+        if ($offset === false) {
+            // Supplied section is not a top section.
+            throw new coding_exception('get_section_dates method is designed to be used with top level sections only.');
+        }
+
+        if ($startdate === false) {
+            $course = $this->get_course();
+            $userdates = course_get_course_dates_for_user_id($course, $USER->id);
+            $startdate = $userdates['start'];
+        }
 
         // Hack alert. We add 2 hours to avoid possible DST problems. (e.g. we go into daylight
         // savings and the date changes.
@@ -564,6 +528,7 @@ class format_flexsections extends core_courseformat\base {
      *
      * Flexsections format uses the following options:
      * - maxsubsections
+     * - automaticenddate
      *
      * @param bool $foreditform
      * @return array of options
@@ -583,6 +548,10 @@ class format_flexsections extends core_courseformat\base {
                 ],
                 'showsection0title' => [
                     'default' => get_config('format_flexsections', 'showsection0titledefault') ?? 0,
+                    'type' => PARAM_BOOL,
+                ],
+                'automaticenddate' => [
+                    'default' => 0,
                     'type' => PARAM_BOOL,
                 ],
             ];
@@ -616,6 +585,12 @@ class format_flexsections extends core_courseformat\base {
                     'help_component' => 'format_flexsections',
                     'element_type' => 'advcheckbox',
                 ],
+                'automaticenddate' => [
+                    'label' => new lang_string('automaticenddate', 'format_flexsections'),
+                    'help' => 'automaticenddate',
+                    'help_component' => 'format_flexsections',
+                    'element_type' => 'advcheckbox',
+                ]
             ];
             $courseformatoptions = array_merge_recursive($courseformatoptions, $courseformatoptionsedit);
         }
@@ -650,7 +625,86 @@ class format_flexsections extends core_courseformat\base {
             array_unshift($elements, $element);
         }
 
+        if (!$forsection) {
+            // Re-order things.
+            $mform->insertElementBefore($mform->removeElement('automaticenddate', false), 'idnumber');
+            $mform->disabledIf('enddate', 'automaticenddate', 'checked');
+            $mform->disabledIf('automaticenddate', 'layout', 'eq', FORMAT_FLEXSECTIONS_LAYOUT_TOPICS);
+            foreach ($elements as $key => $element) {
+                if ($element->getName() == 'automaticenddate') {
+                    unset($elements[$key]);
+                }
+            }
+        }
         return $elements;
+    }
+
+    /**
+     * Updates the end date for a course in weekly layout if option automaticenddate is set.
+     *
+     * This method is called from event observers and it can not use any modinfo or format caches because
+     * events are triggered before the caches are reset.
+     *
+     * @param int $courseid
+     */
+    public static function update_end_date($courseid) {
+        global $DB, $COURSE;
+
+        // For performance use DB query rather class instance to check if we use flexsections
+        // weekly layout and automaticenddate is enabled.
+        $sql = "SELECT c.id, c.enddate
+                  FROM {course} c
+                  JOIN {course_format_options} fol
+                    ON fol.courseid = c.id
+                   AND fol.format = c.format
+                   AND fol.name = :loptionname
+                   AND fol.value = :loptionvalue
+                   AND fol.sectionid = 0
+                  JOIN {course_format_options} foa
+                    ON foa.courseid = c.id
+                   AND foa.format = c.format
+                   AND foa.name = :aoptionname
+                   AND foa.value = :aoptionvalue
+                   AND foa.sectionid = 0
+                 WHERE c.format = :format
+                   AND c.id = :courseid";
+        $course = $DB->get_record_sql($sql, [
+            'loptionname' => 'layout',
+            'loptionvalue' => FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY,
+            'aoptionname' => 'automaticenddate',
+            'aoptionvalue' => 1,
+            'format' => 'flexsections',
+            'courseid' => $courseid
+        ]);
+
+        if (!$course) {
+            // Looks like it is a course in a different format or layout is not weekly
+            // or automaticenddate is disabled, nothing to do here.
+            return;
+        }
+
+        $format = new format_flexsections('flexsections', $course->id);
+        // Clear cache, otherwise get_sections may not contain new section.
+        rebuild_course_cache($course->id, true, true);
+
+        // Determine the last section at top level.
+        $lasttopsection = 0;
+        foreach ($format->get_sections() as $s) {
+            if ($s->parent === 0) {
+                $lasttopsection = $s->section;
+            }
+        }
+
+        // Get the final week's last day.
+        $dates = $format->get_section_dates((int) $lasttopsection, false);
+
+        // Set the course end date.
+        if ((int) $course->enddate !== $dates->end) {
+            $DB->set_field('course', 'enddate', $dates->end, ['id' => $course->id]);
+            if (isset($COURSE->id) && $COURSE->id == $course->id) {
+                $COURSE->enddate = $dates->end;
+            }
+        }
     }
 
     /**
@@ -885,8 +939,20 @@ class format_flexsections extends core_courseformat\base {
      * @return int $sectionnum
      */
     public function create_new_section($parent = 0, $before = null): int {
+        global $DB;
         $section = course_create_section($this->courseid, 0);
         $sectionnum = $this->move_section($section, $parent, $before);
+
+        if ($parent === 0) {
+            // Update course enddate for the new top section if necessary.
+            $course = $this->get_course();
+            if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY && $course->automaticenddate === 1) {
+                $dates = $this->get_section_dates($sectionnum, false);
+                $DB->set_field('course', 'enddate', $dates->end, ['id' => $this->courseid]);
+                rebuild_course_cache($this->courseid, true);
+            }
+        }
+
         return $sectionnum;
     }
 
@@ -1028,7 +1094,7 @@ class format_flexsections extends core_courseformat\base {
      * @param null|int|section_info $before
      * @return int new section number
      */
-    public function move_section($section, $parent, $before = null) {
+    public function move_section($section, $parent, $before = null): int {
         global $DB;
         $section = $this->get_section($section);
         $parent = $this->get_section($parent);
