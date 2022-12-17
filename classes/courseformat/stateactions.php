@@ -161,6 +161,42 @@ class stateactions extends  \core_courseformat\stateactions {
     }
 
     /**
+     * Create a course section (top level).
+     *
+     * @param stateupdates $updates the affected course elements track
+     * @param stdClass $course the course object
+     * @param int[] $ids not used
+     * @param int $targetsectionid optional target section id (if not passed section will be appended)
+     * @param int $targetcmid not used
+     */
+    public function section_add(
+        stateupdates $updates,
+        stdClass $course,
+        array $ids = [],
+        ?int $targetsectionid = null,
+        ?int $targetcmid = null
+    ): void {
+
+        $coursecontext = context_course::instance($course->id);
+        require_capability('moodle/course:update', $coursecontext);
+
+        // Get course format settings.
+        $format = course_get_format($course->id);
+        $lastsectionnumber = $format->get_last_section_number();
+        $maxsections = $format->get_max_sections();
+
+        if ($lastsectionnumber >= $maxsections) {
+            throw new moodle_exception('maxsectionslimit', 'moodle', $maxsections);
+        }
+
+        // Create new section at top level.
+        $format->create_new_section();
+
+        // Adding a section affects the full course structure.
+        $this->course_state($updates, $course);
+    }
+
+    /**
      * Adding a subsection
      *
      * @param \core_courseformat\stateupdates $updates
