@@ -104,6 +104,11 @@ class format_flexsections extends core_courseformat\base {
             // Return the general section.
             return get_string('section0name', 'format_flexsections');
         } else if ($course->layout === FORMAT_FLEXSECTIONS_LAYOUT_WEEKLY) {
+            if (!($section instanceof \section_info)) {
+                // We need section_info instance to access parent attribute.
+                $section = $this->get_section($section);
+            }
+
             // Show weeks layout for top level section.
             if (isset($section->parent) && $section->parent === 0) {
                 // This is identical what weekly format does.
