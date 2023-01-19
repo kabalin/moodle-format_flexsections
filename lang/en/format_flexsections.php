@@ -26,6 +26,7 @@ $string['accordion'] = 'Accordion effect';
 $string['accordiondesc'] = 'When one section is expanded, collapse all others.';
 $string['addsections'] = 'Add section';
 $string['addsubsection'] = 'Add subsection';
+$string['addsectionbelow'] = 'Add section below';
 $string['backtocourse'] = 'Back to course \'{$a}\'';
 $string['backtosection'] = 'Back to \'{$a}\'';
 $string['cmbacklink'] = 'Display back link in activities';
