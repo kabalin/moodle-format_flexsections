@@ -68,6 +68,7 @@ class section extends \core_courseformat\output\local\content\section {
         } else if ($PAGE->user_is_editing() && $cap && !empty($this->section->parent)) {
             $addsubsectiondata = [
                 'parentid' => $format->get_section($this->section->parent)->id,
+                'afterid' => $this->section->id,
                 'cmcontrols' => $data->cmcontrols,
             ];
             $data->cmcontrols = $output->render_from_template('format_flexsections/local/content/section/addsubsectionbutton', $addsubsectiondata);
