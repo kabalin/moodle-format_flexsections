@@ -86,22 +86,20 @@ class stateactions extends  \core_courseformat\stateactions {
     }
 
     /**
-     * Find next section
+     * Find next section within the same parent.
      *
      * @param \course_modinfo $modinfo
      * @param \section_info $thissection
      * @return \section_info|null
      */
     protected function find_next_section(\course_modinfo $modinfo, \section_info $thissection): ?\section_info {
-        $found = false;
-        foreach ($modinfo->get_section_info_all() as $section) {
-            if ($found) {
-                return $section->parent == $thissection->parent ? $section : null;
-            } else if ($section->id == $thissection->id) {
-                $found = true;
-            }
-        }
-        return null;
+        // Build array of same parent sections starting from next to $thissection.
+        $sections = array_filter($modinfo->get_section_info_all(), function($s) use ($thissection) {
+            return ($s->parent == $thissection->parent) && ($s->section > $thissection->section);
+        });
+
+        // Empty array means $thissection is last section, otherwise the first section is the one we need.
+        return empty($sections) ? null : array_shift($sections);
     }
 
     /**
@@ -216,12 +214,13 @@ class stateactions extends  \core_courseformat\stateactions {
         $beforesection = null;
         if (!empty($aftersectionid)) {
             $validatesections[] = $aftersectionid;
-            $beforesection = $modinfo->get_section_info_by_id($aftersectionid, MUST_EXIST);
+            $aftersection = $modinfo->get_section_info_by_id($aftersectionid, MUST_EXIST);
+            $beforesection = $this->find_next_section($modinfo, $aftersection);
         }
         $this->validate_sections($course, $validatesections, __FUNCTION__);
         require_capability('moodle/course:update', context_course::instance($course->id));
-        $targetsection = $modinfo->get_section_info_by_id($targetsectionid, MUST_EXIST);
-        $format->create_new_section($targetsection, $beforesection);
+        $parentsection = $modinfo->get_section_info_by_id($targetsectionid, MUST_EXIST);
+        $format->create_new_section($parentsection, $beforesection);
 
         // Adding subsection affects the full course structure.
         $this->course_state($updates, $course);
