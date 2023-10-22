@@ -18,6 +18,10 @@
     padding-bottom: 1rem;
 }
 
+.course-content ul.flexsections li.section .course-section-header h3.sectionname img {
+    margin-right: 1rem;
+}
+
 .course-content ul.flexsections li.section .content {
     margin: 0;
     padding: 0;
