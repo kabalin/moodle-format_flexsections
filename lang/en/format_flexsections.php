@@ -74,6 +74,7 @@ $string['privacy:metadata'] = 'The Flexible sections format plugin does not stor
 $string['secondarytitle'] = 'Secondary title';
 $string['secondarytitle_help'] = 'If defined, secondary title will be displayed above the title in the section layout. This is useful when one is using weekly layout and want to have a custom title too.';
 $string['section0name'] = 'General';
+$string['sectionicon'] = 'Section icon';
 $string['sectionname'] = 'Topic';
 $string['showcollapsed'] = 'Display as a link';
 $string['showexpanded'] = 'Display on the same page';

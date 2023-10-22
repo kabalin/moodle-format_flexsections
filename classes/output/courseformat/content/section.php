@@ -50,18 +50,31 @@ class section extends \core_courseformat\output\local\content\section {
      * @return stdClass
      */
     public function export_for_template(\renderer_base $output): stdClass {
-        global $PAGE;
+        global $PAGE, $CFG;
         $format = $this->format;
         $course = $format->get_course();
+        $context = \context_course::instance($format->get_course()->id);
 
         $data = parent::export_for_template($output);
         $data->secondarytitle = $this->section->secondarytitle;
+        if ($this->section->sectionicon) {
+            require_once($CFG->libdir . '/filestorage/file_storage.php');
+
+            $fs = get_file_storage();
+            if ($file = $fs->get_area_files($context->id, 'format_flexsections', 'sectionicon',  $this->section->id, 'filename', false)) {
+                $file = reset($file);
+                $imageurl = \moodle_url::make_pluginfile_url($file->get_contextid(), $file->get_component(), $file->get_filearea(),
+                    $file->get_itemid(), $file->get_filepath(), $file->get_filename());
+                $data->sectionicon = \html_writer::img($imageurl, get_string('sectionicon', 'format_flexsections'),
+                    ['width' => '30', 'height' => '30', 'background-size' => 'cover']);
+            }
+        }
 
         // For sections that are displayed as a link do not print list of cms or controls.
         $showaslink = $this->section->collapsed == FORMAT_FLEXSECTIONS_COLLAPSED
             && $this->format->get_viewed_section() != $this->section->section;
 
-        $cap = has_capability('moodle/course:update', \context_course::instance($format->get_course()->id));
+        $cap = has_capability('moodle/course:update', $context);
         $data->showaslink = $showaslink;
         if ($showaslink) {
             $data->cmlist = [];

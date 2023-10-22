@@ -511,6 +511,14 @@ class format_flexsections extends core_courseformat\base {
      */
     public function section_format_options($foreditform = false): array {
         return [
+            'sectionicon' => [
+                'type' => PARAM_INT,
+                'label' => '',
+                'element_type' => 'hidden',
+                'default' => 0,
+                'cache' => true,
+                'cachedefault' => 0,
+            ],
             'secondarytitle' => [
                 'type' => PARAM_TEXT,
                 'label' => get_string('secondarytitle', 'format_flexsections'),
@@ -646,6 +654,26 @@ class format_flexsections extends core_courseformat\base {
     }
 
     /**
+     * sectionicon_filemanager options helper.
+     *
+     * @return array
+     */
+    private static function get_sectionicon_filemanager_options(): array {
+        global $CFG;
+
+        return [
+            'subdirs' => false,
+            'maxfiles' => 1,
+            'maxbytes' => $CFG->maxbytes,
+            'accepted_types' => [
+                '.jpg',
+                '.gif',
+                '.png',
+            ]
+        ];
+    }
+
+    /**
      * Adds format options elements to the course/section edit form.
      *
      * This function is called from {@see course_edit_form::definition_after_data()}.
@@ -655,8 +683,14 @@ class format_flexsections extends core_courseformat\base {
      * @return array array of references to the added form elements.
      */
     public function create_edit_form_elements(&$mform, $forsection = false) {
-        global $COURSE;
+        global $COURSE, $CFG;
         $elements = parent::create_edit_form_elements($mform, $forsection);
+
+        if ($forsection) {
+            // Add filemanager for section icon.
+            $mform->addElement('filemanager', 'sectionicon_filemanager', get_string('sectionicon', 'format_flexsections'),
+                null, self::get_sectionicon_filemanager_options());
+        }
 
         if (!$forsection && (empty($COURSE->id) || $COURSE->id == SITEID)) {
             // Add "numsections" element to the create course form - it will force new course to be prepopulated
@@ -689,6 +723,34 @@ class format_flexsections extends core_courseformat\base {
     }
 
     /**
+     * Return an instance of moodleform to edit a specified section
+     *
+     * Default implementation returns instance of editsection_form that automatically adds
+     * additional fields defined in course_format::section_format_options()
+     *
+     * Format plugins may extend editsection_form if they want to have custom edit section form.
+     *
+     * @param mixed $action the action attribute for the form. If empty defaults to auto detect the
+     *              current url. If a moodle_url object then outputs params as hidden variables.
+     * @param array $customdata the array with custom data to be passed to the form
+     *     /course/editsection.php passes section_info object in 'cs' field
+     *     for filling availability fields
+     * @return moodleform
+     */
+    public function editsection_form($action, $customdata = array()) {
+        $form = parent::editsection_form($action, $customdata);
+        $section = $customdata['cs'];
+        if ($section->sectionicon) {
+            // Prepare image.
+            $context = context_course::instance($this->courseid);
+            $options = file_prepare_standard_filemanager((object) [], 'sectionicon', self::get_sectionicon_filemanager_options(),
+                $context, 'format_flexsections', 'sectionicon', $section->id);
+            $form->set_data($options);
+        }
+        return $form;
+    }
+
+    /**
      * Updates format options for a course
      *
      * If $data does not contain property with the option name, the option will not be updated
@@ -712,6 +774,25 @@ class format_flexsections extends core_courseformat\base {
         }
 
         return $result;
+    }
+
+    /**
+     * Updates format options for a course or section
+     *
+     * If $data does not contain property with the option name, the option will not be updated
+     *
+     * @param stdClass|array $data return value from moodleform::get_data() or array with data
+     * @param null|int $sectionid null if these are options for course or section id (course_sections.id)
+     *     if these are options for section
+     * @return bool whether there were any changes to the options values
+     */
+    protected function update_format_options($data, $sectionid = null) {
+        if ($sectionid) {
+            $context = context_course::instance($this->courseid);
+            $data = (array) file_postupdate_standard_filemanager((object) $data, 'sectionicon',
+                self::get_sectionicon_filemanager_options(), $context, 'format_flexsections', 'sectionicon', $sectionid);
+        }
+        return parent::update_format_options($data, $sectionid);
     }
 
     /**
@@ -1919,4 +2000,38 @@ function format_flexsections_before_footer() {
         ]);
     }
     return '';
+}
+
+/**
+ * Serve the embedded files.
+ *
+ * @param stdClass $course the course object
+ * @param stdClass $cm the course module object
+ * @param context $context the context
+ * @param string $filearea the name of the file area
+ * @param array $args extra arguments (itemid, path)
+ * @param bool $forcedownload whether or not force download
+ * @param array $options additional options affecting the file serving
+ * @return void|false the file not found, just send the file otherwise and do not return anything
+ */
+function format_flexsections_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options = []) {
+    global $DB;
+    require_course_login($course, true, $cm);
+    $sectionid = array_shift($args);
+    $filename = array_pop($args);
+
+    // Get section details and check it exists.
+    $section = $DB->get_field('course_sections', 'section', ['id' => $sectionid, 'course' => $course->id], MUST_EXIST);
+    $modinfo = get_fast_modinfo($course);
+    $coursesections = $modinfo->get_section_info($section, MUST_EXIST);
+
+    // Check user is allowed to see it.
+    if ($coursesections->uservisible && $filearea === 'sectionicon') {
+        $fs = get_file_storage();
+        $file = $fs->get_file($context->id, 'format_flexsections', $filearea, $sectionid, '/', $filename);
+        if (!$file) {
+            return;
+        }
+        send_stored_file($file, null, 0, $forcedownload, $options);
+    }
 }
