@@ -661,6 +661,8 @@ class format_flexsections extends core_courseformat\base {
                 '.jpg',
                 '.gif',
                 '.png',
+                '.svg',
+                '.ico',
             ]
         ];
     }
