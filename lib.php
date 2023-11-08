@@ -118,6 +118,27 @@ class format_flexsections extends core_courseformat\base {
     }
 
     /**
+     * Return the format section preferences.
+     *
+     * @return array of preferences indexed by preference name
+     */
+    public function get_sections_preferences_by_preference(): array {
+        $sectionpreferences = parent::get_sections_preferences_by_preference();
+
+        if (empty($sectionpreferences)) {
+            // On first course access show all subsections collapsed in the index.
+            $subsections = [];
+            foreach ($this->get_sections() as $subsection) {
+                if ($subsection->parent !== 0) {
+                    array_push($subsections, $subsection->id);
+                }
+            }
+            $sectionpreferences['indexcollapsed'] = $subsections;
+        }
+        return $sectionpreferences;
+    }
+
+    /**
      * Returns the depth of the section in hierarchy
      *
      * For example, top section has depth 1, subsection of top section has depth 2,
