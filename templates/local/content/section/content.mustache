@@ -81,7 +81,7 @@
         "numsections": 42,
         "sitehome": false,
         "highlightedlabel" : "Highlighted",
-        "showaslink" : true,
+        "hassubsections" : true,
         "testingonly-make-mustache-lint-happy": 1
     }
 }}
@@ -97,7 +97,7 @@
 
 {{/ core_courseformat/local/content/section/content }}
 
-{{^showaslink}}
+{{#hassubsections}}
 <ul class="flexsections-level-{{level}}" data-for="course_subsectionlist" data-parent="{{id}}">
     {{#insertsubsection}}
         {{> format_flexsections/local/content/addsection}}
@@ -106,7 +106,7 @@
         {{> format_flexsections/local/content/section }}
     {{/subsections}}
 </ul>
-{{/showaslink}}
+{{/hassubsections}}
 
 {{#testingonly-make-mustache-lint-happy}}
 </div>
