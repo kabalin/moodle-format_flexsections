@@ -43,13 +43,14 @@ class header extends \core_courseformat\output\local\content\section\header {
      * @return \stdClass
      */
     public function export_for_template(\renderer_base $output): \stdClass {
+        global $PAGE;
 
         $data = parent::export_for_template($output);
         $data->indenttitle = false;
         $data->hidetitle = false;
         $course = $this->format->get_course();
 
-        if ($this->section->collapsed == FORMAT_FLEXSECTIONS_COLLAPSED) {
+        if (!$PAGE->user_is_editing() && $this->section->collapsed == FORMAT_FLEXSECTIONS_COLLAPSED) {
             // Do not display the collapse/expand caret for sections that are meant to be shown on a separate page.
             $data->headerdisplaymultipage = true;
             if ($this->format->get_viewed_section() != $this->section->section) {
@@ -62,6 +63,15 @@ class header extends \core_courseformat\output\local\content\section\header {
                 }
             }
         }
+
+        if ($PAGE->user_is_editing() && $this->section->collapsed == FORMAT_FLEXSECTIONS_COLLAPSED
+            && $this->format->get_viewed_section() != $this->section->section) {
+                // Still display the title as a link when editing "display as link" section.
+                $data->title = $output->section_title($this->section, $course);
+                $data->indenttitle = $this->title_needs_indenting();
+        }
+
+        $data->hidetitle = false;
 
         if (!$course->showsection0title && $this->section->section === 0) {
             // Do not display header title for the "General" section.
