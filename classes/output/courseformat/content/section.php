@@ -77,7 +77,7 @@ class section extends \core_courseformat\output\local\content\section {
 
         $cap = has_capability('moodle/course:update', $context);
         $data->showaslink = $showaslink;
-        if ($showaslink) {
+        if (!$PAGE->user_is_editing() && $showaslink) {
             $data->cmlist = [];
             $data->cmcontrols = '';
         } else if ($PAGE->user_is_editing() && $cap && !empty($this->section->parent)
@@ -92,8 +92,9 @@ class section extends \core_courseformat\output\local\content\section {
         }
 
         // Add subsections.
-        if (!$showaslink) {
+        if ($PAGE->user_is_editing() || !$showaslink) {
             $data->subsections = $this->section->section ? $this->get_subsections($output) : [];
+            $data->hassubsections = !empty($data->subsections);
             $data->level = $this->level;
         }
 
