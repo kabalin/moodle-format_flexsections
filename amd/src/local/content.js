@@ -70,6 +70,7 @@ export default class FlexsectionComponent extends Component {
         // Optional component name for debugging.
         this.name = 'course_format_flexsections';
         this.selectors.COURSE_SUBSECTIONLIST = `[data-for='course_subsectionlist']`;
+        this.selectors.COURSE_SECTION_CURRENT = `[data-for="section"].current`;
     }
 
     /**
@@ -92,6 +93,12 @@ export default class FlexsectionComponent extends Component {
                 "hashchange",
                 this._hashHandler.bind(this),
             );
+        }
+        const current = document.querySelector(this.selectors.COURSE_SECTION_CURRENT);
+        if (current) {
+            setTimeout(() => {
+                current.scrollIntoView({behavior: "smooth", block: "nearest"});
+            }, 500);
         }
     }
 
