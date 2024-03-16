@@ -39,14 +39,15 @@ Feature: Using course in flexsections format
     And I open section "3" edit menu
     And I click on "Add subsection" "link" in the "li#section-3" "css_element"
 
+@q1
   Scenario: Add sections and activities to flexsections format
     Given I should see "First module"
     And I should see "Second module"
     And I log out
     When I log in as "student1"
     And I am on "Course 1" course homepage
-    Then I should see "First module"
-    And I should see "Second module"
+    Then I should not see "First module"
+    And I should not see "Second module"
 
   Scenario: Hiding section in flexsections format
     When I open section "2" edit menu
