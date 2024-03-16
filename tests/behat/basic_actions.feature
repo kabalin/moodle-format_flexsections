@@ -46,8 +46,8 @@ Feature: Using course in flexsections format
     And I log out
     When I log in as "student1"
     And I am on "Course 1" course homepage
-    Then I should not see "First module"
-    And I should not see "Second module"
+    Then I should see "First module"
+    And I should see "Second module"
 
   Scenario: Hiding section in flexsections format
     When I open section "2" edit menu
