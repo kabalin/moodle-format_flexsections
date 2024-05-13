@@ -156,7 +156,13 @@ class format_flexsections extends core_courseformat\base {
      * @return string the page title
      */
     public function page_title(): string {
-        return get_string('topicoutline');
+        global $CFG;
+        if ((int)$CFG->branch >= 404) {
+            // TODO it is possible it is not used anymore. Review.
+            return 'Topic outline';
+        } else {
+            return get_string('topicoutline');
+        }
     }
 
     /**
@@ -1371,6 +1377,39 @@ class format_flexsections extends core_courseformat\base {
         }
         return $maxsections;
     }
+
+    /**
+     * Set the current section number to display.
+     * Some formats has the hability to swith from one section to multiple sections per page.
+     *
+     * @param int|null $sectionnum null for all sections or a sectionid.
+     */
+    public function set_section_number(int $sectionnum): void {
+        global $CFG;
+        if ((int)$CFG->branch >= 404) {
+            parent::set_sectionnum($sectionnum);
+        } else {
+            parent::set_section_number($sectionnum);
+        }
+    }
+
+    /**
+     * Set if the current format instance will show multiple sections or an individual one.
+     *
+     * Some formats has the hability to swith from one section to multiple sections per page,
+     * output components will use this method to know if the current display is a single or
+     * multiple sections.
+     *
+     * @return int zero for all sections or the sectin number
+     */
+    public function get_section_number(): int {
+        global $CFG;
+        if ((int)$CFG->branch >= 404) {
+            return (int)parent::get_sectionnum();
+        } else {
+            return parent::get_section_number();
+        }
+    }
 }
 
 /**
@@ -1429,6 +1468,10 @@ function format_flexsections_add_back_link_to_cm(): ?cm_info {
  * @return string
  */
 function format_flexsections_before_footer() {
+    // This is an implementation of a legacy callback that will only be called in older Moodle versions.
+    // It will not be called in Moodle versions that contain the hook core\hook\output\before_footer_html_generation,
+    // instead, the callback format_flexsections\local\hooks\output\before_footer_html_generation::callback will be executed.
+
     global $OUTPUT;
     if ($cm = format_flexsections_add_back_link_to_cm()) {
         return $OUTPUT->render_from_template('format_flexsections/back_link_in_cms', [
