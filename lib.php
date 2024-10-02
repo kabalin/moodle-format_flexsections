@@ -27,6 +27,7 @@ require_once($CFG->dirroot. '/course/format/lib.php');
 
 use format_flexsections\constants;
 use core\output\inplace_editable;
+use format_flexsections\local\helpers\preferences;
 
 define('FORMAT_FLEXSECTIONS_COLLAPSED', 1);
 define('FORMAT_FLEXSECTIONS_EXPANDED', 0);
@@ -39,6 +40,7 @@ define('FORMAT_FLEXSECTIONS_EXPANDED', 0);
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class format_flexsections extends core_courseformat\base {
+    use preferences;
 
     /**
      * Returns true if this course format uses sections.

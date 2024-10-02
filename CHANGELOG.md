@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 - When a section used to be displayed on a course page and is now displayed as a link,
   the old student preferences about collapsed state affect the visibility of
   the section summary #68
+- Coding error when trying to collapse a large number of sections #88
+  (workaround for the core bug MDL-78073)
 
 ## [4.1.1] - 2024-10-02
 ### Fixed
