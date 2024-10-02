@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unreleased
+### Fixed
+- When a section used to be displayed on a course page and is now displayed as a link,
+  the old student preferences about collapsed state affect the visibility of
+  the section summary #68
+
 ## [4.1.1] - 2024-10-02
 ### Fixed
 - When section has availability restriction and the restriction is displayed, all subsections

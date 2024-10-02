@@ -1550,6 +1550,27 @@ class format_flexsections extends core_courseformat\base {
             }
         }
     }
+
+    /**
+     * Return the format section preferences.
+     *
+     * @return array of preferences indexed by sectionid
+     */
+    public function get_sections_preferences(): array {
+        $result = parent::get_sections_preferences();
+
+        // For sections that are displayed as links ignore the 'contentcollapsed' preference.
+        $displayedaslink = [];
+        foreach ($this->get_sections() as $s) {
+            $displayedaslink[$s->id] = $s->collapsed;
+        }
+        foreach ($result as $sectionid => &$obj) {
+            if (!empty($obj->contentcollapsed) && !empty($displayedaslink[$sectionid])) {
+                $obj->contentcollapsed = 0;
+            }
+        }
+        return $result;
+    }
 }
 
 /**
