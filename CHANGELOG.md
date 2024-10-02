@@ -1,6 +1,12 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## Unresolved
+### Fixed
+- When section has availability restriction and the restriction is displayed, all subsections
+  and activities in the subsections should not be available.
+  This also fixes the exception that made course index disappear for students #89
+
 ## [4.1.0] - 2024-05-22
 ### Added
 - Support for Moodle 4.4, #83
