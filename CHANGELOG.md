@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file.
   the section summary #68
 - Coding error when trying to collapse a large number of sections #88
   (workaround for the core bug MDL-78073)
+### Added
+- Support for Moodle 4.5
 
 ## [4.1.1] - 2024-10-02
 ### Fixed
