@@ -1,6 +1,10 @@
 # Changelog
 All notable changes to this project will be documented in this file.
 
+## [4.1.3] - 2024-12-08
+### Fixed
+- Fixed exception: Call to undefined function format_flexsections_add_back_link_to_cm #99, #101
+
 ## [4.1.2] - 2024-10-06
 ### Fixed
 - When a section used to be displayed on a course page and is now displayed as a link,
