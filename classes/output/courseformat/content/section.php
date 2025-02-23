@@ -58,6 +58,7 @@ class section extends \core_courseformat\output\local\content\section {
         $data = parent::export_for_template($output);
         $data->secondarytitle = $this->section->secondarytitle;
         $data->sectionicon = '';
+        $data->hassubsections = false;
         if ($this->section->sectionicon) {
             require_once($CFG->libdir . '/filestorage/file_storage.php');
 
