@@ -95,7 +95,7 @@ class section extends \core_courseformat\output\local\content\section {
         // Add subsections.
         if ($PAGE->user_is_editing() || !$showaslink) {
             $data->subsections = $this->section->section ? $this->get_subsections($output) : [];
-            $data->hassubsections = !empty($data->subsections);
+            $data->hassubsections = !empty($data->subsections) || !$showaslink;
             $data->level = $this->level;
         }
 
