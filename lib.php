@@ -175,7 +175,7 @@ class format_flexsections extends core_courseformat\base {
             // Show weeks layout for top level section.
             if (isset($section->parent) && $section->parent === 0) {
                 // This is identical what weekly format does.
-                $dates = $this->get_section_dates($section);
+                $dates = $this->get_section_dates($section, resettopsections: true);
 
                 // We subtract 24 hours for display purposes.
                 $dates->end = ($dates->end - DAYSECS);
